@@ -6,8 +6,8 @@ import { getRouteDetails } from './services/geminiService';
 import { CalculationResult, TransportMode, EmissionData, SearchFilters, UserProfile } from './types';
 import { 
   Shield, Info, Mail, ArrowLeft, AlertCircle, 
-  FileText, Database, Code, Newspaper, Lock, FileCheck, Cookie,
-  Leaf, Activity, BarChart3
+  FileText, Database, Code, Lock, FileCheck, Cookie,
+  Leaf, Activity, BarChart3, X, CheckCircle
 } from 'lucide-react';
 import { InfoModal } from './components/InfoModal';
 import { UserProfileModal } from './components/UserProfileModal';
@@ -191,6 +191,7 @@ const MODAL_CONTENT: Record<string, { icon: React.ReactNode, colorClass: string,
 
 const DEFAULT_PROFILE: UserProfile = {
   totalCo2Saved: 0,
+  totalCaloriesBurned: 0,
   totalTrips: 0,
   badges: [],
   streak: 0,
@@ -205,18 +206,31 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Soft Onboarding State
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  
+  // Toast State
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Load Profile and Theme from Local Storage
+  // Load Profile, Theme, and Onboarding Status from Local Storage
   useEffect(() => {
     const savedProfile = localStorage.getItem('greenRoute_profile');
     if (savedProfile) {
-      setUserProfile(JSON.parse(savedProfile));
+      // Merge with default to ensure new fields (like calories) exist
+      setUserProfile(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
     }
     
     // Check system preference for dark mode
     const savedTheme = localStorage.getItem('greenRoute_theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
        setIsDarkMode(true);
+    }
+
+    // Check Welcome Banner
+    const hasVisited = localStorage.getItem('greenRoute_visited');
+    if (!hasVisited) {
+      setShowWelcomeBanner(true);
     }
   }, []);
 
@@ -236,6 +250,11 @@ export default function App() {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     localStorage.setItem('greenRoute_theme', newMode ? 'dark' : 'light');
+  };
+
+  const dismissWelcome = () => {
+    setShowWelcomeBanner(false);
+    localStorage.setItem('greenRoute_visited', 'true');
   };
 
   const handleCalculate = useCallback(async (origin: string, destination: string, filters: SearchFilters) => {
@@ -326,6 +345,7 @@ export default function App() {
     const today = new Date().toISOString().split('T')[0];
     const newProfile = { ...userProfile };
     newProfile.totalCo2Saved += saved;
+    newProfile.totalCaloriesBurned += (data.calories || 0);
     newProfile.totalTrips += 1;
     
     // Streak Logic
@@ -344,12 +364,9 @@ export default function App() {
     setUserProfile(newProfile);
     localStorage.setItem('greenRoute_profile', JSON.stringify(newProfile));
 
-    // Show feedback (could be a toast, using modal for simplicity in prototype)
-    setActiveModal({
-        title: "Route Selected! 🎉",
-        content: `Great choice! You saved ${saved.toFixed(2)}kg of CO2 on this trip. Your eco-stats have been updated.`,
-        icon: <div className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center text-2xl">🌱</div>
-    });
+    // Show toast
+    setToastMessage(`You saved ${saved.toFixed(2)}kg CO₂ today! 🌱`);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const openModal = (key: string, e?: React.MouseEvent) => {
@@ -371,7 +388,45 @@ export default function App() {
 
   return (
     <div className={`${isDarkMode ? 'dark' : ''} font-inter`}>
-        <div className="min-h-screen bg-green-50/30 dark:bg-slate-900 flex flex-col transition-colors duration-300">
+        <div className="min-h-screen bg-green-50/30 dark:bg-slate-900 flex flex-col transition-colors duration-300 relative">
+        
+        {/* Soft Onboarding Banner */}
+        {showWelcomeBanner && (
+          <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 relative z-[60]">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="bg-white/20 p-1.5 rounded-full">👋</span>
+                <p className="text-sm font-medium">Welcome to GreenRoute! Compare your commute, save carbon, and track your streak!</p>
+              </div>
+              <button 
+                onClick={dismissWelcome}
+                className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Dismiss welcome banner"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Success Toast */}
+        {toastMessage && (
+          <div className="fixed top-24 right-4 z-[70] animate-in slide-in-from-right fade-in duration-300">
+             <div className="bg-white dark:bg-slate-800 border-l-4 border-green-500 shadow-2xl rounded-r-xl p-4 flex items-center gap-4 max-w-sm">
+                <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full text-green-600 dark:text-green-400">
+                   <CheckCircle size={24} />
+                </div>
+                <div>
+                   <p className="font-bold text-gray-900 dark:text-white">Trip Logged!</p>
+                   <p className="text-sm text-gray-600 dark:text-gray-300">{toastMessage}</p>
+                </div>
+                <button onClick={() => setToastMessage(null)} className="ml-auto text-gray-400 hover:text-gray-600">
+                   <X size={16} />
+                </button>
+             </div>
+          </div>
+        )}
+
         <Header 
             onOpenProfile={() => setShowProfile(true)} 
             toggleTheme={toggleTheme}
@@ -411,36 +466,43 @@ export default function App() {
             </div>
             )}
 
-            {result && <ResultsDashboard result={result} onSelectRoute={handleSelectRoute} />}
+            {result && (
+              <ResultsDashboard 
+                result={result} 
+                onSelectRoute={handleSelectRoute} 
+                userProfile={userProfile}
+                onOpenModal={openModal}
+              />
+            )}
 
             {!result && !loading && !error && (
             <div className="max-w-7xl mx-auto px-4 py-16 text-center text-gray-500 dark:text-gray-400">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
                 <div 
                     onClick={() => openModal("Eco Awareness")}
-                    className="cursor-pointer p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    className="cursor-pointer p-6 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
-                    <div className="bg-green-100 dark:bg-green-900/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 dark:text-green-400 text-2xl">🌱</div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-2">Eco Awareness</h3>
-                    <p className="text-sm">Understand exactly how much CO2 your vehicle emits per trip.</p>
+                    <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-2xl">🌱</div>
+                    <h3 className="font-bold text-gray-900 mb-2">Eco Awareness</h3>
+                    <p className="text-sm text-gray-500">Understand exactly how much CO2 your vehicle emits per trip.</p>
                 </div>
                 
                 <div 
                     onClick={() => openModal("Compare Modes")}
-                    className="cursor-pointer p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    className="cursor-pointer p-6 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
-                    <div className="bg-blue-100 dark:bg-blue-900/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 dark:text-blue-400 text-2xl">📊</div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-2">Compare Modes</h3>
-                    <p className="text-sm">Visualize the difference between driving, public transit, and active travel.</p>
+                    <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">📊</div>
+                    <h3 className="font-bold text-gray-900 mb-2">Compare Modes</h3>
+                    <p className="text-sm text-gray-500">Visualize the difference between driving, public transit, and active travel.</p>
                 </div>
                 
                 <div 
                     onClick={() => openModal("Health Benefits")}
-                    className="cursor-pointer p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    className="cursor-pointer p-6 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
-                    <div className="bg-orange-100 dark:bg-orange-900/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-600 dark:text-orange-400 text-2xl">💪</div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-2">Health Benefits</h3>
-                    <p className="text-sm">See how many calories you could burn by biking or walking instead.</p>
+                    <div className="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-600 text-2xl">💪</div>
+                    <h3 className="font-bold text-gray-900 mb-2">Health Benefits</h3>
+                    <p className="text-sm text-gray-500">See how many calories you could burn by biking or walking instead.</p>
                 </div>
                 </div>
             </div>

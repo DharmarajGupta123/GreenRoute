@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRightLeft, Loader2, Calendar, Clock, Car, Bus, Bike } from 'lucide-react';
+import { Search, MapPin, ArrowRightLeft, Loader2, Car, Bus, Bike, Circle } from 'lucide-react';
 import { SearchFilters } from '../types';
 
 interface TripInputProps {
@@ -11,9 +11,6 @@ export const TripInput: React.FC<TripInputProps> = ({ onCalculate, isLoading }) 
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   
-  // New State for filters
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState('09:00');
   const [modes, setModes] = useState({
     car: true,
     transit: true,
@@ -33,156 +30,120 @@ export const TripInput: React.FC<TripInputProps> = ({ onCalculate, isLoading }) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (origin.trim() && destination.trim()) {
-      onCalculate(origin, destination, { date, time, modes });
+      onCalculate(origin, destination, { modes });
     }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto -mt-10 relative z-10 px-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100 dark:border-slate-700 transition-colors duration-300">
+    <div className="w-full max-w-3xl mx-auto -mt-10 relative z-10 px-4">
+      {/* Container is always white now */}
+      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 ring-1 ring-black/5 transition-colors duration-300">
         <form onSubmit={handleSubmit}>
           
-          {/* Section 1: Mode Filters */}
-          <div className="mb-6">
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 block">
-              Transport Preferences
-            </label>
-            <div className="flex flex-wrap gap-3">
+          {/* Mode Selection Pills */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex bg-gray-100 p-1.5 rounded-full gap-2 shadow-inner">
               <button
                 type="button"
                 onClick={() => toggleMode('car')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                   modes.car 
-                    ? 'bg-red-50 text-red-700 ring-1 ring-red-200 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-900/50' 
-                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600'
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Car size={16} /> Car
+                <Car size={16} /> <span className="hidden sm:inline">Car</span>
               </button>
               <button
                 type="button"
                 onClick={() => toggleMode('transit')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                   modes.transit
-                    ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-900/50' 
-                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600'
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Bus size={16} /> Public Transit
+                <Bus size={16} /> <span className="hidden sm:inline">Transit</span>
               </button>
               <button
                 type="button"
                 onClick={() => toggleMode('active')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                   modes.active
-                    ? 'bg-green-50 text-green-700 ring-1 ring-green-200 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-900/50' 
-                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600'
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Bike size={16} /> Walk / Bike
+                <Bike size={16} /> <span className="hidden sm:inline">Active</span>
               </button>
             </div>
           </div>
 
-          <hr className="border-gray-100 dark:border-slate-700 mb-6" />
+          {/* Stacked Inputs with Visual Route Connector */}
+          <div className="relative flex flex-col gap-4">
+            
+            {/* Visual Route Line */}
+            <div className="absolute left-[26px] top-[26px] bottom-[26px] w-0.5 bg-gradient-to-b from-gray-300 via-gray-300 to-transparent z-0"></div>
 
-          {/* Section 2: Locations & Swap */}
-          <div className="flex flex-col md:flex-row gap-4 items-center relative mb-4">
-            <div className="w-full space-y-2">
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">
-                From
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 dark:text-gray-500 group-focus-within:text-green-600 dark:group-focus-within:text-green-500">
-                  <MapPin size={20} />
-                </div>
-                <input
-                  type="text"
-                  value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
-                  placeholder="e.g. Times Square, NY"
-                  className="block w-full pl-10 pr-3 py-4 border border-gray-200 dark:border-slate-600 rounded-xl leading-5 bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                  required
-                />
+            {/* Origin Input */}
+            <div className="relative group z-10">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-green-600">
+                <Circle size={20} strokeWidth={3} className="fill-white" />
               </div>
+              <input
+                type="text"
+                value={origin}
+                onChange={(e) => setOrigin(e.target.value)}
+                placeholder="Starting Point"
+                className="block w-full pl-14 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl text-lg font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all duration-200"
+                required
+              />
             </div>
 
             {/* Swap Button */}
             <button
               type="button"
               onClick={handleSwap}
-              className="mt-6 md:mt-0 p-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-600 dark:text-gray-300 rounded-full transition-all hover:scale-110 active:scale-95 z-20"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-white border border-gray-100 shadow-md rounded-full text-gray-500 hover:text-green-600 hover:bg-gray-50 transition-all hover:rotate-180 duration-300"
               title="Swap locations"
-              aria-label="Swap origin and destination"
             >
-              <ArrowRightLeft size={18} className="md:rotate-0 rotate-90" />
+              <ArrowRightLeft size={16} className="rotate-90" />
             </button>
 
-            <div className="w-full space-y-2">
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">
-                To
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 dark:text-gray-500 group-focus-within:text-green-600 dark:group-focus-within:text-green-500">
-                  <MapPin size={20} />
-                </div>
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder="e.g. Central Park"
-                  className="block w-full pl-10 pr-3 py-4 border border-gray-200 dark:border-slate-600 rounded-xl leading-5 bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                  required
-                />
+            {/* Destination Input */}
+            <div className="relative group z-10">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-red-500">
+                <MapPin size={22} className="fill-white" />
               </div>
+              <input
+                type="text"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="Where to?"
+                className="block w-full pl-14 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl text-lg font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all duration-200"
+                required
+              />
             </div>
           </div>
 
-          {/* Section 3: Date, Time & Submit */}
-          <div className="flex flex-col md:flex-row gap-4">
-             <div className="flex gap-4 w-full md:w-auto flex-1">
-                <div className="relative group flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
-                    <Calendar size={18} />
-                  </div>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-4 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-green-500 transition-all text-sm [color-scheme:light] dark:[color-scheme:dark]"
-                  />
-                </div>
-                <div className="relative group w-32">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 dark:text-gray-500">
-                    <Clock size={18} />
-                  </div>
-                  <input
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-4 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-green-500 transition-all text-sm [color-scheme:light] dark:[color-scheme:dark]"
-                  />
-                </div>
-             </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full md:w-auto px-8 py-4 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white font-bold rounded-xl shadow-lg shadow-green-600/30 dark:shadow-green-900/50 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed min-h-[56px]"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  <span>Analyzing...</span>
-                </>
-              ) : (
-                <>
-                  <Search size={20} />
-                  <span>Calculate Impact</span>
-                </>
-              )}
-            </button>
-          </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full mt-8 py-4 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 text-white font-bold text-lg rounded-2xl shadow-xl shadow-green-600/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={24} className="animate-spin" />
+                <span>Finding Best Routes...</span>
+              </>
+            ) : (
+              <>
+                <Search size={24} strokeWidth={2.5} />
+                <span>Calculate Footprint</span>
+              </>
+            )}
+          </button>
         </form>
       </div>
     </div>

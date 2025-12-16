@@ -26,7 +26,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data }) => {
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 h-[400px]">
-      <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Emission Comparison (kg CO₂)</h3>
+      <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Your Environmental Impact (kg CO₂)</h3>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -43,7 +43,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({ data }) => {
               hide={true} 
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-            <Bar dataKey="co2" radius={[6, 6, 0, 0]} barSize={40}>
+            <Bar dataKey="co2" radius={[6, 6, 0, 0]} barSize={40} isAnimationActive={true} animationDuration={1000}>
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}

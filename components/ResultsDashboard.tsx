@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import { TransportMode, CalculationResult, EmissionData } from '../types';
-import { Car, Bus, Train, Bike, Footprints, Leaf, Timer, Flame, DollarSign, Users, AlertTriangle, Share2, Building2, MousePointerClick } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { TransportMode, CalculationResult, EmissionData, UserProfile } from '../types';
+import { Car, Bus, Train, Bike, Footprints, Leaf, Timer, Flame, DollarSign, Users, AlertTriangle, Share2, Building2, MousePointerClick, Info, Trees } from 'lucide-react';
 import { ComparisonChart } from './ComparisonChart';
+import { ImpactSummary } from './ImpactSummary';
 
 interface ResultsDashboardProps {
   result: CalculationResult;
   onSelectRoute: (data: EmissionData) => void;
+  userProfile: UserProfile;
+  onOpenModal: (key: string) => void;
 }
+
+const ECO_TIPS = [
+  "Properly inflating car tires improves mileage by 3%.",
+  "Aggressive driving (speeding, rapid acceleration) lowers gas mileage by up to 33%.",
+  "A generic bike commute burns ~300 calories every 30 minutes.",
+  "Public transportation produces 95% less CO₂ per mile than driving alone.",
+  "Idling your vehicle for more than 10 seconds uses more fuel than restarting it.",
+  "Carrying 100 lbs of extra weight in your trunk reduces fuel economy by up to 2%.",
+  "Walking is the most carbon-neutral way to travel—zero emissions!",
+  "Using cruise control on the highway can save up to 14% on fuel."
+];
 
 const ModeIcon: React.FC<{ mode: TransportMode }> = ({ mode }) => {
   switch (mode) {
@@ -19,23 +33,42 @@ const ModeIcon: React.FC<{ mode: TransportMode }> = ({ mode }) => {
   }
 };
 
+const SmartBadge: React.FC<{ mode: TransportMode }> = ({ mode }) => {
+  if (mode === TransportMode.BIKE || mode === TransportMode.WALK) {
+    return (
+      <div className="absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm bg-green-500 text-white">
+        ZERO EMISSIONS & HEALTHY CHOICE
+      </div>
+    );
+  }
+  if (mode === TransportMode.BUS || mode === TransportMode.TRAIN) {
+    return (
+      <div className="absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm bg-blue-500 text-white">
+        LOW CARBON & COST EFFECTIVE
+      </div>
+    );
+  }
+  return null;
+};
+
 const MetricCard: React.FC<{ data: EmissionData; onSelect: () => void }> = ({ data, onSelect }) => {
   const isEco = data.co2 === 0 || data.mode === TransportMode.TRAIN || data.mode === TransportMode.BUS;
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleClick = () => {
+    setIsAnimating(true);
+    onSelect();
+    setTimeout(() => setIsAnimating(false), 500);
+  };
   
   return (
     <div className={`
       relative overflow-hidden rounded-xl p-5 border transition-all duration-300 hover:shadow-lg group
       ${isEco ? 'bg-green-50/40 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'}
     `}>
-      {data.comparisonLabel && (
-        <div className={`absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm
-          ${data.comparisonLabel === 'Recommended' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}
-        `}>
-          {data.comparisonLabel.toUpperCase()}
-        </div>
-      )}
+      <SmartBadge mode={data.mode} />
       
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-4 mt-2">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${isEco ? 'bg-green-100 dark:bg-green-800/30' : 'bg-gray-100 dark:bg-slate-700'}`}>
             <ModeIcon mode={data.mode} />
@@ -86,29 +119,43 @@ const MetricCard: React.FC<{ data: EmissionData; onSelect: () => void }> = ({ da
       </div>
 
       <button 
-        onClick={onSelect}
+        onClick={handleClick}
         className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-95
           ${isEco 
             ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20' 
             : 'bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200'
-          }`}
+          }
+          ${isAnimating ? 'animate-pulse scale-95' : ''}
+        `}
+        aria-label={`Choose ${data.mode} route`}
       >
         <MousePointerClick size={16} />
-        {isEco ? 'I\'m taking this route!' : 'Select Route'}
+        {isEco ? 'Choose This Impact' : 'Choose This Impact'}
       </button>
     </div>
   );
 };
 
-export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSelectRoute }) => {
+export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSelectRoute, userProfile, onOpenModal }) => {
   const { estimation, emissions } = result;
   const [activeTab, setActiveTab] = useState<'personal' | 'city'>('personal');
   const [showShareToast, setShowShareToast] = useState(false);
 
+  // Memoize random tip to prevent hydration mismatch or re-renders changing it
+  const dailyTip = useMemo(() => ECO_TIPS[Math.floor(Math.random() * ECO_TIPS.length)], []);
+
   const bestMode = emissions.reduce((prev, current) => (prev.co2 < current.co2) ? prev : current);
+  const carMode = emissions.find(e => e.mode === TransportMode.CAR);
+  const carCo2 = carMode?.co2 || 0;
+  
+  // City View Calculations
+  const peopleCount = 10000;
+  const carbonSavedPerPerson = Math.max(0, carCo2 - bestMode.co2);
+  const totalCitySaved = carbonSavedPerPerson * peopleCount;
+  const treesEquivalent = Math.round(totalCitySaved / 22); // Approx 22kg per tree/year
 
   const handleShare = () => {
-    const text = `I'm going green with GreenRoute! 🌱 Traveling from ${estimation.originFormatted} to ${estimation.destinationFormatted} saves CO2. Try it out!`;
+    const text = `I just saved ${(carCo2 - bestMode.co2).toFixed(2)}kg of CO₂ on my commute! Check your impact at GreenRoute. 🌱`;
     navigator.clipboard.writeText(text);
     setShowShareToast(true);
     setTimeout(() => setShowShareToast(false), 3000);
@@ -152,18 +199,22 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSe
             </button>
             <button 
                 onClick={handleShare}
-                className="p-2 text-gray-500 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors relative"
-                title="Share Results"
+                className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 rounded-lg transition-colors relative font-medium text-sm"
+                title="Share Impact"
+                aria-label="Share impact result"
             >
-                <Share2 size={20} />
+                <Share2 size={16} />
+                Share Impact
                 {showShareToast && (
-                    <div className="absolute top-full mt-2 right-0 w-32 bg-gray-900 text-white text-xs py-1 px-2 rounded text-center animate-fade-in">
+                    <div className="absolute top-full mt-2 right-0 w-32 bg-gray-900 text-white text-xs py-1 px-2 rounded text-center animate-fade-in z-20">
                         Copied!
                     </div>
                 )}
             </button>
         </div>
       </div>
+
+      <ImpactSummary profile={userProfile} />
 
       {activeTab === 'personal' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -173,13 +224,23 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSe
             ))}
           </div>
           <div className="lg:col-span-1 space-y-6">
-            <ComparisonChart data={emissions} />
+            <div className="relative">
+              <ComparisonChart data={emissions} />
+              <button 
+                onClick={() => onOpenModal('Methodology')}
+                className="absolute top-6 right-6 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                aria-label="How we calculate"
+                title="How we calculate"
+              >
+                <Info size={16} />
+              </button>
+            </div>
             
             <div className="bg-gradient-to-br from-green-600 to-teal-700 rounded-2xl shadow-lg p-6 text-white relative overflow-hidden">
               <div className="relative z-10">
                 <h3 className="font-bold text-lg mb-2">Why it matters?</h3>
                 <p className="text-green-50 text-sm leading-relaxed mb-4">
-                   Choosing the <strong>{bestMode.mode}</strong> option saves roughly <strong>{(emissions.find(e => e.mode === TransportMode.CAR)?.co2 || 0) - bestMode.co2}kg of CO₂</strong> compared to driving.
+                   Choosing the <strong>{bestMode.mode}</strong> option saves roughly <strong>{(carCo2 - bestMode.co2).toFixed(2)}kg of CO₂</strong> compared to driving.
                 </p>
                 <div className="flex items-center gap-3 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
                    <div className="text-2xl">🌳</div>
@@ -193,6 +254,16 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSe
                   <Leaf />
               </div>
             </div>
+
+            {/* Daily Eco Tip */}
+            <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-2 text-yellow-700 dark:text-yellow-500 font-bold text-sm uppercase tracking-wide">
+                <Leaf size={16} /> Eco Tip of the Day
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-sm italic">
+                "{dailyTip}"
+              </p>
+            </div>
           </div>
         </div>
       ) : (
@@ -204,7 +275,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSe
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">The Power of Collective Action</h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">If 1,000 people in your city made this choice...</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">If <strong>{peopleCount.toLocaleString()}</strong> people made this choice...</p>
                     </div>
                 </div>
                 
@@ -215,34 +286,36 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onSe
                             <span className="font-medium text-gray-700 dark:text-gray-300">CO₂ Avoided</span>
                         </div>
                         <span className="text-xl font-bold text-gray-900 dark:text-white">
-                            {((emissions.find(e => e.mode === TransportMode.CAR)?.co2 || 0) * 1000).toLocaleString()} kg
+                            {totalCitySaved.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg
                         </span>
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
+                    
+                    <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-900/30">
                         <div className="flex items-center gap-3">
-                            <span className="text-2xl">⛽</span>
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Fuel Saved</span>
+                            <Trees className="text-green-600" size={24} />
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Tree Planting Equivalent</span>
                         </div>
-                        <span className="text-xl font-bold text-gray-900 dark:text-white">
-                            {(estimation.distanceKm * 0.08 * 1000).toFixed(0)} Liters
+                        <span className="text-xl font-bold text-green-700 dark:text-green-400">
+                            {treesEquivalent.toLocaleString()} Trees
                         </span>
                     </div>
+
                     <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
                         <div className="flex items-center gap-3">
                             <span className="text-2xl">💰</span>
                             <span className="font-medium text-gray-700 dark:text-gray-300">Community Savings</span>
                         </div>
                         <span className="text-xl font-bold text-gray-900 dark:text-white">
-                            ${(emissions.find(e => e.mode === TransportMode.CAR)?.cost || 0 * 1000).toLocaleString()}
+                            ${(carMode?.cost || 0 * peopleCount).toLocaleString()}
                         </span>
                     </div>
                 </div>
             </div>
             
             <div className="flex flex-col justify-center items-center text-center p-8 text-gray-600 dark:text-gray-400">
-                <p className="text-lg mb-4">"Small individual choices, when multiplied by millions, can transform the world."</p>
+                <p className="text-lg mb-4 italic">"Small individual choices, when multiplied by millions, can transform the world."</p>
                 <div className="w-24 h-1 bg-green-500 rounded-full mb-4"></div>
-                <p className="text-sm">GreenRoute Prototype Data Estimate</p>
+                <p className="text-sm">GreenRoute Impact Model</p>
             </div>
         </div>
       )}

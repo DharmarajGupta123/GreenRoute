@@ -12,8 +12,6 @@ export interface RouteRequest {
 }
 
 export interface SearchFilters {
-  date: string;
-  time: string;
   modes: {
     car: boolean;
     transit: boolean;
@@ -49,6 +47,7 @@ export interface CalculationResult {
 
 export interface UserProfile {
   totalCo2Saved: number; // kg
+  totalCaloriesBurned: number; // kcal
   totalTrips: number;
   badges: string[];
   streak: number;

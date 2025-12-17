@@ -3,7 +3,7 @@ import { RouteEstimation } from "../types";
 
 // Initialize Gemini Client
 // IMPORTANT: In a real production app, this call would happen on a backend server.
-// For this prototype, we use the client-side API key.
+// @ts-expect-error process is defined in the build environment
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getRouteDetails = async (origin: string, destination: string): Promise<RouteEstimation> => {

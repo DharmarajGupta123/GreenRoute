@@ -16,7 +16,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // @ts-expect-error process is defined in build environment
+   
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
   }
 });

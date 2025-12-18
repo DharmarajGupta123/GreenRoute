@@ -33,7 +33,7 @@ export const ImpactSummary: React.FC<ImpactSummaryProps> = ({ profile }) => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-blue-100 dark:border-blue-900/30 flex items-center gap-4 transition-all hover:shadow-md">
+  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-blue-100 dark:border-blue-900/30 flex items-center gap-4 transition-all hover:shadow-md">
         <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-xl text-blue-600 dark:text-blue-400">
           <Zap size={24} />
         </div>

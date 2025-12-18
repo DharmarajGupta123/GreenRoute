@@ -1,5 +1,5 @@
 import React from 'react';
-import { Leaf, Flame, Zap, TrendingUp } from 'lucide-react';
+import { Leaf, Flame, Zap} from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface ImpactSummaryProps {

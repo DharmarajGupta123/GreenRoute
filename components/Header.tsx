@@ -1,5 +1,5 @@
 import React from 'react';
-import { Leaf, User, Moon, Sun } from 'lucide-react';
+import { Leaf, User, Moon, Sun} from 'lucide-react';
 
 interface HeaderProps {
   onOpenProfile: () => void;

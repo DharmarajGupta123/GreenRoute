@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { TransportMode, CalculationResult, EmissionData, UserProfile } from '../types';
-import { Car, Bus, Train, Bike, Footprints, Leaf, Timer, DollarSign, Users, AlertTriangle, Share2, Building2, MousePointerClick, Info, Trees } from 'lucide-react';
+import { Car, Bus, Train, Bike, Footprints, Leaf, Timer, DollarSign, Users, AlertTriangle, Share2, Building2, MousePointerClick, Info, Trees} from 'lucide-react';
 import { ComparisonChart } from './ComparisonChart';
 import { ImpactSummary } from './ImpactSummary';
 

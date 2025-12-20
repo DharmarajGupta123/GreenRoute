@@ -1,4 +1,7 @@
 {
   "name": "GreenRoute",
-  "description": "A carbon footprint trip planner that compares travel modes to nudge users toward sustainable choices."
+  "description": "A carbon footprint trip planner that compares travel modes to nudge users toward sustainable choices.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

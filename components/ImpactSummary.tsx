@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Leaf, Flame, Zap} from 'lucide-react';
 import { UserProfile } from '../types';
@@ -9,8 +10,8 @@ interface ImpactSummaryProps {
 export const ImpactSummary: React.FC<ImpactSummaryProps> = ({ profile }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-green-100 dark:border-green-900/30 flex items-center gap-4 transition-all hover:shadow-md">
-        <div className="bg-green-100 dark:bg-green-900/40 p-3 rounded-xl text-green-600 dark:text-green-400">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-4 transition-all hover:shadow-md">
+        <div className="bg-emerald-100 dark:bg-emerald-900/40 p-3 rounded-xl text-emerald-600 dark:text-emerald-400">
           <Leaf size={24} />
         </div>
         <div>
@@ -22,7 +23,7 @@ export const ImpactSummary: React.FC<ImpactSummaryProps> = ({ profile }) => {
       </div>
 
       <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-orange-100 dark:border-orange-900/30 flex items-center gap-4 transition-all hover:shadow-md">
-        <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-xl text-orange-600 dark:text-orange-400">
+        <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-xl text-orange-500 dark:text-orange-400">
           <Flame size={24} />
         </div>
         <div>
@@ -33,8 +34,8 @@ export const ImpactSummary: React.FC<ImpactSummaryProps> = ({ profile }) => {
         </div>
       </div>
 
-  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-blue-100 dark:border-blue-900/30 flex items-center gap-4 transition-all hover:shadow-md">
-        <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-xl text-blue-600 dark:text-blue-400">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-cyan-100 dark:border-cyan-900/30 flex items-center gap-4 transition-all hover:shadow-md">
+        <div className="bg-cyan-100 dark:bg-cyan-900/40 p-3 rounded-xl text-cyan-600 dark:text-cyan-400">
           <Zap size={24} />
         </div>
         <div>

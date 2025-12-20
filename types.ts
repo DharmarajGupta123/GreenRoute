@@ -1,3 +1,4 @@
+
 export enum TransportMode {
   CAR = 'Car',
   TRAIN = 'Train',
@@ -19,12 +20,18 @@ export interface SearchFilters {
   };
 }
 
+export interface GroundingSource {
+  title: string;
+  uri: string;
+}
+
 export interface RouteEstimation {
   distanceKm: number;
   durationMins: number; // Driving duration as baseline
   greenTip: string;
   originFormatted: string;
   destinationFormatted: string;
+  sources?: GroundingSource[];
 }
 
 export interface EmissionData {
@@ -32,17 +39,27 @@ export interface EmissionData {
   co2: number; // in kg
   calories: number; // approx calories burned
   durationMins: number; // adjusted duration
+  distanceKm: number; // distance for this specific mode
   color: string;
-  // New Fields for Enhanced Prototype
   cost: number; // Estimated cost in $
-  trafficLevel?: 'Low' | 'Medium' | 'High'; // For Car/Bus
-  crowdLevel?: 'Low' | 'Medium' | 'High'; // For Transit
-  comparisonLabel?: string; // e.g., "Fastest", "Cheapest"
+  trafficLevel?: 'Low' | 'Medium' | 'High'; 
+  crowdLevel?: 'Low' | 'Medium' | 'High';
+  comparisonLabel?: string; 
 }
 
 export interface CalculationResult {
   estimation: RouteEstimation;
   emissions: EmissionData[];
+}
+
+export interface TripHistoryItem {
+  id: string;
+  origin: string;
+  destination: string;
+  date: string;
+  mode: TransportMode;
+  co2Saved: number;
+  distanceKm: number;
 }
 
 export interface UserProfile {
@@ -52,4 +69,5 @@ export interface UserProfile {
   badges: string[];
   streak: number;
   lastTripDate: string | null;
+  history: TripHistoryItem[];
 }

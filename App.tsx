@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { TripInput } from './components/TripInput';
 import { ResultsDashboard } from './components/ResultsDashboard';
@@ -23,10 +23,14 @@ const FACTORS = {
   [TransportMode.WALK]: 0,
 };
 
-// Speed assumptions (km/h) for estimating time if not driving
+// Speed assumptions for estimating time if not driving.
+// Bus/Train are ratios to driving speed: both are slower door-to-door than
+// driving (stops, access, waiting), so the ratio is below 1. Train was
+// previously listed as 1.2 here but the code used a hardcoded 0.8 — the
+// constant and the code disagreed. 0.8 is the value actually used.
 const SPEEDS = {
   [TransportMode.BUS]: 0.6, // Ratio to driving speed
-  [TransportMode.TRAIN]: 1.2, // Ratio to driving speed
+  [TransportMode.TRAIN]: 0.8, // Ratio to driving speed
   [TransportMode.BIKE]: 20, // km/h
   [TransportMode.WALK]: 5,  // km/h
 };
@@ -211,6 +215,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const savedProfile = localStorage.getItem('greenRoute_profile');
@@ -278,7 +283,9 @@ export default function App() {
           distanceKm: dist,
           color: '#ef4444',
           cost: Number((dist * 0.15 + 2).toFixed(2)),
-          trafficLevel: Math.random() > 0.5 ? 'High' : 'Medium',
+          // Deterministic from distance — the old Math.random() made the
+          // same route show different traffic on every calculation.
+          trafficLevel: dist <= 50 ? 'Low' : dist <= 200 ? 'Medium' : 'High',
           comparisonLabel: ''
         });
       }
@@ -294,7 +301,7 @@ export default function App() {
           distanceKm: dist,
           color: '#f97316',
           cost: Number(busCost.toFixed(2)),
-          crowdLevel: Math.random() > 0.6 ? 'High' : 'Low'
+          crowdLevel: dist <= 100 ? 'Low' : dist <= 500 ? 'Medium' : 'High'
         });
 
         // TRAIN CALCULATION
@@ -303,15 +310,18 @@ export default function App() {
           mode: TransportMode.TRAIN,
           co2: Number((dist * FACTORS[TransportMode.TRAIN]).toFixed(2)),
           calories: 20,
-          durationMins: Math.round(driveTime / 0.8),
+          durationMins: Math.round(driveTime / SPEEDS[TransportMode.TRAIN]),
           distanceKm: dist,
           color: '#3b82f6',
           cost: Number(trainCost.toFixed(2)),
-          crowdLevel: 'Medium'
+          crowdLevel: dist <= 100 ? 'Low' : dist <= 500 ? 'Medium' : 'High'
         });
       }
 
-      if (filters.modes.active) {
+      // Bike/Walk only for short trips. Above 100 km their durations are
+      // absurd (Mumbai -> Pune on foot was shown as 30 hours, Mumbai ->
+      // London as 15 days), so they are not offered for long routes.
+      if (filters.modes.active && dist <= 100) {
         allEmissions.push({
           mode: TransportMode.BIKE,
           co2: 0,
@@ -338,6 +348,9 @@ export default function App() {
       }
 
       setResult({ estimation, emissions: allEmissions });
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
@@ -466,7 +479,11 @@ export default function App() {
             </div>
             )}
 
-            {result && <ResultsDashboard result={result} onSelectRoute={handleSelectRoute} userProfile={userProfile} onOpenModal={openModal} />}
+            {result && (
+              <div ref={resultsRef} className="scroll-mt-10">
+                <ResultsDashboard result={result} onSelectRoute={handleSelectRoute} userProfile={userProfile} onOpenModal={openModal} />
+              </div>
+            )}
 
             {!result && !loading && !error && (
             <div className="max-w-7xl mx-auto px-4 py-16 text-center">

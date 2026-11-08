@@ -1,12 +1,18 @@
-
 import React, { useState } from 'react';
-import { Search, MapPin, ArrowRightLeft, Loader2, Car, Bus, Bike, Circle } from 'lucide-react';
+import { Search, MapPin, ArrowRightLeft, Loader2, Car, Bus, Bike, Circle, Sparkles } from 'lucide-react';
 import { SearchFilters } from '../types';
 
 interface TripInputProps {
   onCalculate: (origin: string, destination: string, filters: SearchFilters) => void;
   isLoading: boolean;
 }
+
+const PRESET_ROUTES = [
+  { origin: 'New York', destination: 'Boston', label: 'NYC → Boston' },
+  { origin: 'London', destination: 'Paris', label: 'London → Paris' },
+  { origin: 'San Francisco', destination: 'Los Angeles', label: 'SF → LA' },
+  { origin: 'Mumbai', destination: 'Delhi', label: 'Mumbai → Delhi' },
+];
 
 export const TripInput: React.FC<TripInputProps> = ({ onCalculate, isLoading }) => {
   const [origin, setOrigin] = useState('');
@@ -31,8 +37,14 @@ export const TripInput: React.FC<TripInputProps> = ({ onCalculate, isLoading }) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (origin.trim() && destination.trim()) {
-      onCalculate(origin, destination, { modes });
+      onCalculate(origin.trim(), destination.trim(), { modes });
     }
+  };
+
+  const selectPreset = (preOrigin: string, preDest: string) => {
+    setOrigin(preOrigin);
+    setDestination(preDest);
+    onCalculate(preOrigin, preDest, { modes });
   };
 
   return (
@@ -49,24 +61,22 @@ export const TripInput: React.FC<TripInputProps> = ({ onCalculate, isLoading }) 
                 type="text"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                placeholder="Where from?"
+                placeholder="Where from? (e.g. New York, London, Home)"
                 className="block w-full pl-14 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl text-lg font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 dark:bg-slate-900/50 dark:text-white dark:focus:bg-slate-900"
                 required
               />
             </div>
 
             {/* Swap Button */}
-            <div className="absolute left-8 z-10 -ml-3 -mt-3 hidden md:block">
-              <div className="w-0.5 h-8 bg-gray-200 ml-3 dark:bg-slate-700"></div>
-            </div>
-            
-            <div className="flex justify-center md:hidden -my-2 relative z-10">
-               <button 
+            <div className="flex justify-center -my-2 relative z-10">
+              <button 
                 type="button" 
                 onClick={handleSwap}
-                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-gray-500 transition-colors dark:bg-slate-700 dark:text-gray-400"
+                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-gray-600 transition-colors dark:bg-slate-700 dark:text-gray-300 shadow-sm"
+                title="Swap origin and destination"
+                aria-label="Swap origin and destination"
               >
-                <ArrowRightLeft size={18} />
+                <ArrowRightLeft size={16} />
               </button>
             </div>
 
@@ -79,23 +89,41 @@ export const TripInput: React.FC<TripInputProps> = ({ onCalculate, isLoading }) 
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                placeholder="Where to?"
+                placeholder="Where to? (e.g. Boston, Paris, Office)"
                 className="block w-full pl-14 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl text-lg font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 dark:bg-slate-900/50 dark:text-white dark:focus:bg-slate-900"
                 required
               />
             </div>
           </div>
 
+          {/* Preset Chips */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+              <Sparkles size={12} className="text-emerald-500" /> Quick Try:
+            </span>
+            {PRESET_ROUTES.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => selectPreset(p.origin, p.destination)}
+                disabled={isLoading}
+                className="text-xs px-3 py-1 bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 dark:bg-slate-700/60 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300 text-gray-600 dark:text-gray-300 rounded-lg font-semibold transition-all"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-8 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 transform hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full mt-6 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 transform hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-wait cursor-pointer"
           >
             {isLoading ? (
               <>
-                <Loader2 size={24} className="animate-spin" />
-                <span>Finding Best Routes...</span>
+                <Loader2 size={24} className="animate-spin text-white" />
+                <span>Calculating Best Routes...</span>
               </>
             ) : (
               <>

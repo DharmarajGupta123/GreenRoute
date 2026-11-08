@@ -8,6 +8,11 @@ const __dirname = path.dirname(__filename);
 const PORT = 3000;
 
 async function startServer() {
+  app.get('/download-zip', (_req, res) => {
+    const zipPath = path.join(__dirname, 'greenroute-project.zip');
+    res.download(zipPath, 'greenroute-updated.zip');
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

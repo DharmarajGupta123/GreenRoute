@@ -6,7 +6,7 @@ interface InfoModalProps {
   onClose: () => void;
   title: string;
   content: React.ReactNode;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose, title, content, icon }) => {

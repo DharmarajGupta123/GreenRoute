@@ -22,7 +22,7 @@ GreenRoute is an Eco Trip Planner that calculates the carbon footprint of your t
 - Lucide React (Icons)
 - Vite
 
-## Setup
+## Setup & Local Development
 
 1. Clone the repository:
    ```bash
@@ -32,14 +32,44 @@ GreenRoute is an Eco Trip Planner that calculates the carbon footprint of your t
    ```bash
    npm install
    ```
-3. Create a `.env` file in the root directory and add your Google Gemini API key:
+3. Create a `.env` file from `.env.example`:
+   ```bash
+   cp .env.example .env
    ```
-   API_KEY=your_google_api_key_here
+   Add your Gemini API key:
+   ```
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
 4. Run the development server:
    ```bash
    npm run dev
    ```
+
+## Deploying to Vercel (Permanent 24/7 Hosting)
+
+GreenRoute is pre-configured with `vercel.json` and a serverless API handler (`api/index.ts`).
+
+### Option 1: Via GitHub (Recommended)
+1. Push this project to your GitHub repository (e.g. `https://github.com/DharmarajGupta123/GreenRoute`).
+2. Go to [vercel.com](https://vercel.com) and log in.
+3. Click **"Add New..."** > **"Project"**.
+4. Select your **GreenRoute** repository and click **Import**.
+5. Under **Environment Variables**, add:
+   - **Key**: `GEMINI_API_KEY`
+   - **Value**: Your Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+6. Click **Deploy**. Vercel will build the frontend into `dist` and deploy the backend `/api` routes as Serverless Functions.
+
+### Option 2: Via Vercel CLI
+1. Install Vercel CLI:
+   ```bash
+   npm i -g vercel
+   ```
+2. In your project directory, run:
+   ```bash
+   vercel
+   ```
+3. Set your environment variable when prompted or in your Vercel Project Settings (`Settings` > `Environment Variables` > `GEMINI_API_KEY`).
+4. Run `vercel --prod` to deploy to production.
 
 ## License
 

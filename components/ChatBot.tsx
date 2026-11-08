@@ -1,8 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
-import { MessageSquare, X, Send, Loader2, Bot, User, Leaf } from 'lucide-react';
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { MessageSquare, X, Send, Leaf } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'model';
@@ -33,16 +30,17 @@ export const ChatBot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: input,
-        config: {
-          systemInstruction: 'You are an elite environmental advisor for the GreenRoute app. Your goal is to encourage sustainable commuting. Use data points about CO2 reduction, health benefits of active travel, and urban planning. Be concise, expert, and friendly.',
-          thinkingConfig: { thinkingBudget: 8000 }
-        },
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg.text }),
       });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Chat request failed');
+      }
 
-      setMessages(prev => [...prev, { role: 'model', text: response.text || 'I am processing your request. Please try asking in a different way.' }]);
+      setMessages(prev => [...prev, { role: 'model', text: data.text || 'I am processing your request. Please try asking in a different way.' }]);
     } catch (error) {
       console.error("Chat Error:", error);
       setMessages(prev => [...prev, { role: 'model', text: 'Sorry, I am currently over capacity. Please try again in a moment.' }]);

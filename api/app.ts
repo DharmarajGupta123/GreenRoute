@@ -165,6 +165,30 @@ const CITY_COORDS: Record<string, { lat: number; lng: number; name: string }> = 
   'toronto': { lat: 43.6532, lng: -79.3832, name: 'Toronto, Canada' },
   'vancouver': { lat: 49.2827, lng: -123.1207, name: 'Vancouver, Canada' },
   'dubai': { lat: 25.2048, lng: 55.2708, name: 'Dubai, UAE' },
+  // Gujarat cities + state aliases. 'Gujarat' is a state, not a city, so it
+  // maps to Ahmedabad (largest city); 'gujrat' is the common misspelling.
+  // State names below map to their capital / largest city, so typing a state
+  // still gives a real estimate instead of an error when Gemini is down.
+  'gujarat': { lat: 23.0225, lng: 72.5714, name: 'Ahmedabad, Gujarat, India' },
+  'gujrat': { lat: 23.0225, lng: 72.5714, name: 'Ahmedabad, Gujarat, India' },
+  'gandhinagar': { lat: 23.2232, lng: 72.65, name: 'Gandhinagar, Gujarat, India' },
+  'rajkot': { lat: 22.3039, lng: 70.8022, name: 'Rajkot, Gujarat, India' },
+  'bhavnagar': { lat: 21.7645, lng: 72.1519, name: 'Bhavnagar, Gujarat, India' },
+  'jamnagar': { lat: 22.4707, lng: 70.0577, name: 'Jamnagar, Gujarat, India' },
+  'junagadh': { lat: 21.5222, lng: 70.4579, name: 'Junagadh, Gujarat, India' },
+  'maharashtra': { lat: 19.076, lng: 72.8777, name: 'Mumbai, Maharashtra, India' },
+  'rajasthan': { lat: 26.9124, lng: 75.7873, name: 'Jaipur, Rajasthan, India' },
+  'kerala': { lat: 9.9312, lng: 76.2673, name: 'Kochi, Kerala, India' },
+  'karnataka': { lat: 12.9716, lng: 77.5946, name: 'Bengaluru, Karnataka, India' },
+  'tamil nadu': { lat: 13.0827, lng: 80.2707, name: 'Chennai, Tamil Nadu, India' },
+  'uttar pradesh': { lat: 26.8467, lng: 80.9462, name: 'Lucknow, Uttar Pradesh, India' },
+  'west bengal': { lat: 22.5726, lng: 88.3639, name: 'Kolkata, West Bengal, India' },
+  'punjab': { lat: 31.634, lng: 74.8723, name: 'Amritsar, Punjab, India' },
+  'bihar': { lat: 25.5941, lng: 85.1376, name: 'Patna, Bihar, India' },
+  'odisha': { lat: 20.2961, lng: 85.8245, name: 'Bhubaneswar, Odisha, India' },
+  'orissa': { lat: 20.2961, lng: 85.8245, name: 'Bhubaneswar, Odisha, India' },
+  'assam': { lat: 26.1445, lng: 91.7362, name: 'Guwahati, Assam, India' },
+  'haryana': { lat: 28.4595, lng: 77.0266, name: 'Gurugram, Haryana, India' },
 };
 
 function findCity(query: string) {
@@ -277,7 +301,10 @@ app.post('/api/route-estimate', async (req, res) => {
     return;
   }
 
-  // If API key is present, attempt Gemini with a strict 5-second timeout so it never hangs
+  // If API key is present, attempt Gemini with a strict 8-second timeout so it never hangs.
+  // 8s, not 5s: Gemini often takes 5-8s, and the frontend aborts at 10s, so
+  // 8s still leaves a margin while giving Gemini a real chance to answer
+  // for places not in the built-in list.
   try {
     const ai = new GoogleGenAI({
       apiKey,
@@ -329,9 +356,9 @@ app.post('/api/route-estimate', async (req, res) => {
       },
     });
 
-    // 5-second timeout fallback
+    // 8-second timeout fallback
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('AI response timed out')), 5000)
+      setTimeout(() => reject(new Error('AI response timed out')), 8000)
     );
 
     const response = await Promise.race([aiPromise, timeoutPromise]);
